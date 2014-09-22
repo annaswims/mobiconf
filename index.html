@@ -166,7 +166,16 @@ require 'benchmark'
 				<section>
 					<h2>Benchmarking examples</h2>
 					<pre><code data-trim contenteditable style="font-size: 18px; margin-top: 20px;">
-Example 1
+require 'benchmark'
+include Benchmark          # we need the CAPTION and FORMAT constants
+
+n = 50000
+Benchmark.benchmark(CAPTION, 7, FORMAT, ">total:", ">avg:") do |x|
+  tf = x.report("for:")   { for i in 1..n; a = "1"; end }
+  tt = x.report("times:") { n.times do   ; a = "1"; end }
+  tu = x.report("upto:")  { 1.upto(n) do ; a = "1"; end }
+  [tf+tt+tu, (tf+tt+tu)/3]
+end
 					</code></pre>
 				</section>
 
@@ -174,13 +183,14 @@ Example 1
 					<h2>Benchmarking Queries</h2>
 					<pre><code data-trim contenteditable style="font-size: 18px; margin-top: 20px;">
 //Use People without Employees example
+b = Business.find(23)
 Benchmark.measure{ b.people.authorized.in_role('enduser').readonly }
 					</code></pre>
 				</section>
 
 				<section>
 					<h2>Explain Yourself...</h2>
-					<p>EXPLAIN is a Postgres command used to see how long a statement is taking to execute and what exactly it is doing. Explain will output the number of rows the query will touch, the cost and the width in bytes. The Cost is actually an arbitrary number can can be though of as units of work. Explain does not actually run the query.
+					<p>EXPLAIN is a Postgres command used to see how long a statement is taking to execute and what exactly it is doing. Explain will output the number of rows the query will touch, the cost and the width in bytes. The Cost is actually an arbitrary number can can be thought of as units of work. Explain does not actually run the query.
 					</p>
 					<pre><code data-trim contenteditable style="font-size: 18px; margin-top: 20px;">
 mobi_dev=# explain select * from lines;
@@ -298,13 +308,20 @@ FROM employees;
 				<section>
 					<h2>Eager Loading Example</h2>
 					<p>
-						What is Eager Loading (N+1) queries? 
-						Eager loading is a way to improve performance by loading associated content through the DB but unfortunately it can be a database performance problem at times. 
+						Let's BULLET show us the way.
+
 					</p>
 				</section>
 
 				<section>
-					<h2>Auto Generated Routes</h2>
+					<h2> Other Ways to Improve performance at a glance</h2>
+					<ul>
+						<li>Use count instead of length</li>
+						<li>Auto Generated Routes (don't generate routes you don't use)</li>
+						<li>Tune your Postgresql.conf (use pgtune)</li>
+						<li>Use Mechache when possible</li>
+						<li></li>
+					</ul>
 				</section>
 
 				<section>
@@ -321,15 +338,9 @@ FROM employees;
 						<li>https://tomafro.net/2009/09/quickly-list-missing-foreign-key-indexes</li>
 						<li>http://www.ruby-doc.org/stdlib-1.9.3/libdoc/benchmark/rdoc/Benchmark.html</li>
 						<li>http://stackoverflow.com/questions/556405/what-do-real-user-and-sys-mean-in-the-output-of-time1</li>
-						<li></li>
 						<li>https://wiki.postgresql.org/wiki/Introduction_to_VACUUM,_ANALYZE,_EXPLAIN,_and_COUNT</li>
-						<li></li>
-						<li></li>
 						<li>http://railscasts.com/episodes/22-eager-loading-revised</li>
-						<li></li>
-						<li></li>
-						<li></li>
-						<li></li>
+						<li>http://pgtune.projects.pgfoundry.org/</li>
 					</ul>
 					<p>
 						You can link between slides internally,
