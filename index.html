@@ -110,11 +110,13 @@ Speed affects conversions in a big way. For most e-commerce stores, the associat
 
 				<section>
 					<h2>Let's see if we comply...</h2>
-					<pre><code data-trim contenteditable style="font-size: 16px; margin-top: 20px;">
-c = ActiveRecord::Base.connection
-c.tables.collect do |t|
-  columns = c.columns(t).collect(&:name).select {|x| x.ends_with?("_id" || x.ends_with("_type"))}
-  indexed_columns = c.indexes(t).collect(&:columns).flatten.uniq
+					<pre><code data-trim contenteditable style="font-size: 22px; margin-top: 20px;">
+conn = ActiveRecord::Base.connection
+conn.tables.collect do |t|
+  columns = conn.columns(t).collect(&:name).select do |x|
+    x.ends_with?("_id" || x.ends_with("_type"))
+  end
+  indexed_columns = conn.indexes(t).collect(&:columns).flatten.uniq
   unindexed = columns - indexed_columns
   unless unindexed.empty?
     puts "#{t}: #{unindexed.join(", ")}"
@@ -127,13 +129,15 @@ end
 					<h2>Benchmarking</h2>
 					<p>
 						Ruby comes with a module called Benchmark which provides methods to measure and report the time it takes to execute ruby code. Benchmarks example:
-						<pre><code data-trim contenteditable style="font-size: 16px; margin-top: 20px;">
+						<pre><code data-trim contenteditable style="font-size: 24px; margin-top: 20px;">
 require 'benchmark'
 
- puts Benchmark.measure { puts "Chris, thanks for organizing MOBI Conf"*900_000 }
+puts Benchmark.measure {
+  puts "Chris, thanks for organizing MOBI Conf"*900_000
+}
 					</code></pre>
 					This will result in this report:
-					<pre><code data-trim contenteditable style="font-size: 18px; margin-top: 20px;">
+					<pre><code data-trim contenteditable style="font-size: 24px; margin-top: 20px;">
   0.020000   0.240000   0.260000 (  1.502408)
   user       system     total       real
 					</code></pre>
@@ -149,7 +153,7 @@ require 'benchmark'
 
 				<section>
 					<h2>Benchmarking methods</h2>
-					<pre><code data-trim contenteditable style="font-size: 18px; margin-top: 20px;">
+					<pre><code data-trim contenteditable style="font-size: 22px; margin-top: 20px;">
 - benchmark(caption = "", label_width = nil, format = nil, *labels)
 - bm(label_width = 0, *labels)
 - bmbm(width = 0)
@@ -167,7 +171,7 @@ require 'benchmark'
 
 				<section>
 					<h2>Benchmarking example</h2>
-					<pre><code data-trim contenteditable style="font-size: 18px; margin-top: 20px;">
+					<pre><code data-trim contenteditable style="font-size: 24px; margin-top: 20px;">
 require 'benchmark'
 include Benchmark          # we need the CAPTION and FORMAT constants
 
@@ -191,11 +195,19 @@ upto:     0.010000   0.010000   0.020000 (  0.012889)
 
 				<section>
 					<h2>Benchmarking Queries</h2>
-					<pre><code data-trim contenteditable style="font-size: 14px; margin-top: 20px;">
-puts Benchmark.measure { Business.where(:name => "ADS").includes(:lines).where("lines.active = 't'").references(:lines) }
+					<pre><code data-trim contenteditable style="font-size: 24px; margin-top: 20px;">
+puts Benchmark.measure {
+  Business.where(:name => "ADS").includes(:lines)
+    .where("lines.active = 't'").references(:lines)
+}
+
   0.000000   0.000000   0.000000 (  0.000893)
 
-puts Benchmark.measure { Business.where(:name => "ADS").includes(:lines).where(:lines => { :active => true }) }
+puts Benchmark.measure {
+  Business.where(:name => "ADS").includes(:lines)
+    .where(:lines => { :active => true })
+}
+
   0.000000   0.000000   0.000000 (  0.007002)
 					</code></pre>
 				</section>
@@ -204,7 +216,7 @@ puts Benchmark.measure { Business.where(:name => "ADS").includes(:lines).where(:
 					<h2>Explain Yourself...</h2>
 					<p>EXPLAIN is a Postgres command used to see how long a statement is taking to execute and what exactly it is doing. Explain will output the number of rows the query will touch, the cost and the width in bytes. The Cost is actually an arbitrary number can can be thought of as units of work. Explain does not actually run the query.
 					</p>
-					<pre><code data-trim contenteditable style="font-size: 18px; margin-top: 20px;">
+					<pre><code data-trim contenteditable style="font-size: 24px; margin-top: 20px;">
 mobi_dev=# explain select * from lines;
                            QUERY PLAN
 ----------------------------------------------------------------
@@ -225,7 +237,7 @@ mobi_dev=# explain select * from lines;
 				<section>
 					<section>
 						<h2>But I can't explain properly, without analyzing first...</h2>
-<pre><code data-trim contenteditable style="font-size: 20px; margin-top: 10px;">
+<pre><code data-trim contenteditable style="font-size: 24px; margin-top: 10px;">
 mobi_dev=# explain select * from lines where active = true;
                            QUERY PLAN
 ----------------------------------------------------------------
@@ -249,24 +261,42 @@ mobi_dev=# explain select * from lines where active = true;
 						<h2>Analyze and Explain</h2>
 						<p>Give the query planner up-to-date statistics so that it can plan the best way to execute a query.</p>
 
-<pre><code data-trim contenteditable style="font-size: 14px; margin-top: 10px;">
-mobi_dev=# explain analyze select * from lines where active = true ORDER BY liability;
-                                                      QUERY PLAN
-----------------------------------------------------------------------------------------------------------------------
- Sort  (cost=75875.41..76307.59 rows=172874 width=318) (actual time=977.444..1088.552 rows=172017 loops=1)
+
+
+<pre><code data-trim contenteditable style="font-size: 24px; margin-top: 10px;">
+mobi_dev=# explain analyze
+	select *
+	from lines
+	where active = true
+	ORDER BY liability;
+                                 QUERY PLAN
+------------------------------------------------------------------------------
+ Sort  (cost=75875.41..76307.59 rows=172874 width=318)
+       (actual time=977.444..1088.552 rows=172017 loops=1)
    Sort Key: liability
    Sort Method: external sort  Disk: 37080kB
-   ->  Seq Scan on lines  (cost=0.00..10015.92 rows=172874 width=318) (actual time=0.012..64.158 rows=172017 loops=1)
+   ->  Seq Scan on lines
+    (cost=0.00..10015.92 rows=172874 width=318)
+    (actual time=0.012..64.158 rows=172017 loops=1)
          Filter: active
          Rows Removed by Filter: 81675
  Total runtime: 1128.558 ms
 (7 rows)
 </code></pre>
-<pre><code data-trim contenteditable style="font-size: 14px; margin-top: 10px;">
-mobi_dev=# explain analyze select * from lines where active = true ORDER BY created_by_id;
-                                                                      QUERY PLAN
-------------------------------------------------------------------------------------------------------------------------------------------------------
- Index Scan using index_lines_on_created_by_id on lines  (cost=0.42..35829.77 rows=172874 width=318) (actual time=2.541..142.403 rows=172017 loops=1)
+
+</section>
+<section>
+<pre><code data-trim contenteditable style="font-size: 24px; margin-top: 10px;">
+mobi_dev=# explain analyze
+    select *
+    from lines
+    where active = true
+    ORDER BY created_by_id;
+                                 QUERY PLAN
+------------------------------------------------------------------------------
+ Index Scan using index_lines_on_created_by_id on lines
+     (cost=0.42..35829.77 rows=172874 width=318)
+     (actual time=2.541..142.403 rows=172017 loops=1)
    Filter: active
    Rows Removed by Filter: 81675
  Total runtime: 151.742 ms
@@ -277,53 +307,88 @@ mobi_dev=# explain analyze select * from lines where active = true ORDER BY crea
 				<section>
 						<h2>NOT IN VS EXCEPT</h2>
 
-<pre><code data-trim contenteditable style="font-size: 14px; margin-top: 10px;">
-mobi_dev=# explain analyze  select count(*) from people where active = 't'
+<pre><code data-trim contenteditable style="font-size: 20px; margin-top: 10px;">
+mobi_dev=# explain analyze
+    select count(*)
+    from people
+    where active = 't'
 and business_id = 23 and (employee_id is null or employee_id NOT IN
 (select external_employee_id from employees where business_id = 23));
-                                                                                 QUERY PLAN
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Aggregate  (cost=4977232278.72..4977232278.73 rows=1 width=0) (actual time=2537954.427..2537954.428 rows=1 loops=1)
-   ->  Index Scan using index_people_on_business_id on people  (cost=3662.91..4977232151.30 rows=50966 width=0) (actual time=268984.300..2537950.020 rows=1989 loops=1)
+                                 QUERY PLAN
+------------------------------------------------------------------------------
+ Aggregate  (cost=4977232278.72..4977232278.73 rows=1 width=0)
+ (actual time=2537954.427..2537954.428 rows=1 loops=1)
+   ->  Index Scan using index_people_on_business_id on people
+     (cost=3662.91..4977232151.30 rows=50966 width=0)
+     (actual time=268984.300..2537950.020 rows=1989 loops=1)
          Index Cond: (business_id = 23)
          Filter: (active AND ((employee_id IS NULL) OR (NOT (SubPlan 1))))
          Rows Removed by Filter: 130041
          SubPlan 1
-           ->  Materialize  (cost=3662.48..76640.29 rows=194846 width=7) (actual time=0.010..12.101 rows=90526 loops=100238)
-                 ->  Bitmap Heap Scan on employees  (cost=3662.48..74904.06 rows=194846 width=7) (actual time=267.761..1910.034 rows=179716 loops=1)
+           ->  Materialize
+             (cost=3662.48..76640.29 rows=194846 width=7)
+             (actual time=0.010..12.101 rows=90526 loops=100238)
+                 ->  Bitmap Heap Scan on employees
+                   (cost=3662.48..74904.06 rows=194846 width=7)
+                   (actual time=267.761..1910.034 rows=179716 loops=1)
                        Recheck Cond: (business_id = 23)
                        Rows Removed by Index Recheck: 61151
-                       ->  Bitmap Index Scan on index_employees_on_business_id  (cost=0.00..3613.77 rows=194846 width=0) (actual time=265.645..265.645 rows=232292 loops=1)
+                       ->  Bitmap Index Scan on index_employees_on_business_id
+                         (cost=0.00..3613.77 rows=194846 width=0)
+                         (actual time=265.645..265.645 rows=232292 loops=1)
                              Index Cond: (business_id = 23)
  Total runtime: 2537957.639 ms
 (13 rows)
 </code></pre>
-<pre><code data-trim contenteditable style="font-size: 14px; margin-top: 10px;">
+</section>
+
+<section>
+<pre><code data-trim contenteditable style="font-size: 24px; margin-top: 10px;">
 mobi_dev=# EXPLAIN ANALYZE SELECT COUNT (*) FROM ( SELECT employee_id FROM people
 mobi_dev(# WHERE people.business_id = 23 AND (people.active = 't' OR  employee_id is null)
 mobi_dev(# EXCEPT SELECT external_employee_id FROM employees WHERE business_id =23)s;
-                                                                                        QUERY PLAN
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                 QUERY PLAN
+------------------------------------------------------------------------------
  Aggregate  (cost=155776.52..155776.53 rows=1 width=0) (actual time=7638.495..7638.495 rows=1 loops=1)
-   ->  Subquery Scan on s  (cost=153154.39..155548.87 rows=91059 width=0) (actual time=6459.607..7638.202 rows=1989 loops=1)
-         ->  SetOp Except  (cost=153154.39..154638.28 rows=91059 width=7) (actual time=6459.604..7637.755 rows=1989 loops=1)
-               ->  Sort  (cost=153154.39..153896.34 rows=296779 width=7) (actual time=6459.594..7576.301 rows=279954 loops=1)
+   ->  Subquery Scan on s
+     (cost=153154.39..155548.87 rows=91059 width=0)
+     (actual time=6459.607..7638.202 rows=1989 loops=1)
+         ->  SetOp Except
+           (cost=153154.39..154638.28 rows=91059 width=7)
+           (actual time=6459.604..7637.755 rows=1989 loops=1)
+               ->  Sort
+                 (cost=153154.39..153896.34 rows=296779 width=7)
+                 (actual time=6459.594..7576.301 rows=279954 loops=1)
                      Sort Key: "*SELECT* 1".employee_id
                      Sort Method: external merge  Disk: 6024kB
-                     ->  Append  (cost=2546.11..122118.62 rows=296779 width=7) (actual time=24.388..755.030 rows=279954 loops=1)
-                           ->  Subquery Scan on "*SELECT* 1"  (cost=2546.11..45266.10 rows=101933 width=8) (actual time=24.387..387.592 rows=100238 loops=1)
-                                 ->  Bitmap Heap Scan on people  (cost=2546.11..44246.77 rows=101933 width=8) (actual time=24.386..370.551 rows=100238 loops=1)
+                     ->  Append
+                       (cost=2546.11..122118.62 rows=296779 width=7)
+                       (actual time=24.388..755.030 rows=279954 loops=1)
+                           ->  Subquery Scan on "*SELECT* 1"
+                             (cost=2546.11..45266.10 rows=101933 width=8)
+                             (actual time=24.387..387.592 rows=100238 loops=1)
+                                 ->  Bitmap Heap Scan on people
+                                   (cost=2546.11..44246.77 rows=101933 width=8)
+                                   (actual time=24.386..370.551 rows=100238 loops=1)
                                        Recheck Cond: (business_id = 23)
                                        Rows Removed by Index Recheck: 300410
                                        Filter: (active OR (employee_id IS NULL))
                                        Rows Removed by Filter: 31792
-                                       ->  Bitmap Index Scan on index_people_on_business_id  (cost=0.00..2520.62 rows=135493 width=0) (actual time=21.929..21.929 rows=132030 loops=1)
+                                       ->  Bitmap Index Scan on index_people_on_business_id
+                                         (cost=0.00..2520.62 rows=135493 width=0)
+                                         (actual time=21.929..21.929 rows=132030 loops=1)
                                              Index Cond: (business_id = 23)
-                           ->  Subquery Scan on "*SELECT* 2"  (cost=3662.48..76852.52 rows=194846 width=7) (actual time=32.031..335.693 rows=179716 loops=1)
-                                 ->  Bitmap Heap Scan on employees  (cost=3662.48..74904.06 rows=194846 width=7) (actual time=32.029..306.479 rows=179716 loops=1)
+                           ->  Subquery Scan on "*SELECT* 2"
+                             (cost=3662.48..76852.52 rows=194846 width=7)
+                             (actual time=32.031..335.693 rows=179716 loops=1)
+                                 ->  Bitmap Heap Scan on employees
+                                   (cost=3662.48..74904.06 rows=194846 width=7)
+                                   (actual time=32.029..306.479 rows=179716 loops=1)
                                        Recheck Cond: (business_id = 23)
                                        Rows Removed by Index Recheck: 61151
-                                       ->  Bitmap Index Scan on index_employees_on_business_id  (cost=0.00..3613.77 rows=194846 width=0) (actual time=30.255..30.255 rows=232292 loops=1)
+                                       ->  Bitmap Index Scan on index_employees_on_business_id
+                                         (cost=0.00..3613.77 rows=194846 width=0)
+                                         (actual time=30.255..30.255 rows=232292 loops=1)
                                              Index Cond: (business_id = 23)
  Total runtime: 7663.194 ms
 (22 rows)
