@@ -46,7 +46,7 @@
 					<h1>Need For Speed</h1>
 					<h3>Shaving Milliseconds Like a Boss</h3>
 					<p>
-						<small>Created By: <a href="http://iamri.com">Ri Caragol and Anna Carey</a> / <a href="http://twitter.com/ritec">@ritec</a></small>
+						<small>Created By: <a href="http://iamri.com">Ri Caragol</a> / <a href="http://twitter.com/ritec">@ritec</a>  and <a href="http://Lady.codes">Anna Carey</a> / <a href="http://twitter.com/annamul">@annamul</a> </small>
 					</p>
 				</section>
 
@@ -58,6 +58,8 @@
 						<li>Explain and Analyze</li>
 						<li>Benchmarking</li>
 						<li>N+1 Problem and Bullet Gem</li>
+            <li>Asset Pipeline and Nginx config</li>
+          </ul>
 				</section>
 
 
@@ -122,7 +124,11 @@ conn.tables.collect do |t|
     puts "#{t}: #{unindexed.join(", ")}"
   end
 end
+
 					</code></pre>
+          <p>
+            For a more robust soltion see the lol_dba gem
+          </p>
 				</section>
 
 				<section>
@@ -399,24 +405,52 @@ mobi_dev(# EXCEPT SELECT external_employee_id FROM employees WHERE business_id =
 </code></pre>
 				</section>
 </section>
-
-
 				<section>
-					<h2>N+1 Queries and Eager Loading</h2>
+					<h2>N+1 Queries</h2>
 					<p>
-						What is Eager Loading and (N+1) queries?
-						Eager loading is a way to improve performance by loading associated content through the DB. ActiveRecord’s eager loading capability in Rails makes it possible to significantly reduce the number of queries by letting you specify in advance all the associations that are going to be loaded. N+1 is the result of one query per item when you could have queried for all of the items.
+            N+1 is the result of one query per item when you could have queried for all of the items.
 					</p>
+ <pre><code data-trim contenteditable style="font-size: 24px; margin-top: 20px;">
+clients = Client.limit(10)
+clients.each do |client|
+  puts client.address.postcode
+end
+</code> </pre>
+<h3>BAD: 11 Queries</h3>
 				</section>
 
-				<section>
-					<h2>Eager Loading Example</h2>
-					<p>
-						Let BULLET show us the way.
-						BULLET DEMO TIME!
-					</p>
-				</section>
+        <section>
+         <h2>Eager Loading</h2>
+          Eager loading is a way to improve performance by loading associated content through the DB. ActiveRecord’s eager loading capability in Rails makes it possible to significantly reduce the number of queries by letting you specify in advance all the associations that are going to be loaded.
+<pre><code data-trim contenteditable style="font-size: 24px; margin-top: 20px;">
+ clients = Client.includes(:address).limit(10)
 
+clients.each do |client|
+  puts client.address.postcode
+end
+ </code></pre>
+ <h2>Good: 2 Queries</h2>
+
+        </section>
+        <section>
+
+  				<section>
+  					<h2>The Bullet Gem</h2>
+            <img src="bullet.png">
+  				</section>
+          <section>
+          <code data-trim contenteditable style="font-size: 22px; margin-top: 20px;">
+  N+1 Query detected
+  Activity => [:replacement_person]
+  Add to your finder: :include => [:replacement_person]
+N+1 Query method call stack
+mobi/app/models/activity.rb:1891:in `description'
+mobi/app/models/activity.rb:1910:in `title'
+mobi/app/presenters/presenter.rb:62:in `email_person_about_activity'
+...
+          </code>
+        </section>
+      </section>
 				<section>
 					<h2> Other Ways to Improve performance...</h2>
 					<ul>
@@ -467,7 +501,8 @@ mobi_dev(# EXCEPT SELECT external_employee_id FROM employees WHERE business_id =
 
  	    	<section>
  	    	  <h2>Far-future Expires Header</h2>
- 	    	   Because we have a unique url for each revision of the asset we the browser doesn't need to check if it has changed fro a year
+
+ 	    	   Because we have a unique url for each revision of the asset we the browser doesn't need to check if it has changed for a year
 <pre><code data-trim contenteditable style="font-size: 24px; margin-top: 10px;">
 location ~ ^/assets/ {
   expires 1y;
@@ -525,7 +560,9 @@ location ~ ^/(assets)/  {
 
 				<section style="font-size: 24px; margin-top: 20px;">
 					<h1>Questions, comments, concerns, observations, thoughts etc?</h1>
-					<h3>BY Ri Caragol and Anna Carey/ iamri.com</h3>
+					<h3>BY Ri Caragol <a href="http://iamri.com">IAmRi.com</a><br/>
+          and <br/>
+          Anna Carey <a href="http://Lady.codes">Lady.codes</a> </h3>
 				</section>
 
 			</div>
