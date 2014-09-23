@@ -14,7 +14,7 @@
 
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-		<link rel="stylesheet" href="css/reveal.min.css">
+		<link rel="stylesheet" href="css/reveal.css">
 		<link rel="stylesheet" href="css/theme/sky.css" id="theme">
 
 		<!-- For syntax highlighting -->
@@ -97,7 +97,7 @@ Speed affects conversions in a big way. For most e-commerce stores, the associat
 					<h2>Things to keep in mind.</h2>
 					<ul style="font-size: 32px;">
 						<li>Without an Index we have to scan the whole table, this is inefficient and expensive.</li>
-						<li> If you se a WHERE, HAVING or ORDER BY in generated queries... make sure there's an index</li>
+						<li>If you see a WHERE, HAVING or ORDER BY in generated queries... make sure there's an index</li>
 						<li>Once an index is created, no further intervention is required: the system will update the index when the table is modified.</li>
 						<li>Your DB will use the index in queries when it thinks doing so would be more efficient than a sequential table scan.</li>
 						<li>Creating an index on a large table can take a long time. Reads are allowed, but writes won't be.</li>
@@ -430,7 +430,7 @@ location ~ ^/(assets)/  {
 
 
 						<h2>References and Resources</h2>
-						<ul>
+						<ul style="font-size: 24px; margin-top: 20px;">
 							<li><a href ="http://torbit.com/benefits/">torbit.com/benefits/</a></li>
 							<li><a href ="https://tomafro.net/2009/09/quickly-list-missing-foreign-key-indexes">tomafro.net/2009/09/quickly-list-missing-foreign-key-indexes</a></li>
 							<li><a href ="http://www.ruby-doc.org/stdlib-1.9.3/libdoc/benchmark/rdoc/Benchmark.html">www.ruby-doc.org/stdlib-1.9.3/libdoc/benchmark/rdoc/Benchmark.html</a></li>
@@ -442,7 +442,7 @@ location ~ ^/(assets)/  {
 						</ul>
 					</section>
 					<section>
-						<ul>
+						<ul style="font-size: 24px; margin-top: 20px;">
 						  <li><a href ="http://railscasts.com/episodes/22-eager-loading-revised">railscasts.com/episodes/22-eager-loading-revised</a></li>
 							<li><a href ="http://pgtune.projects.pgfoundry.org/">pgtune.projects.pgfoundry.org</a></li>
 							<li><a href ="http://www.airpair.com/ruby-on-rails/performance">www.airpair.com/ruby-on-rails/performance</a></li>
@@ -453,9 +453,9 @@ location ~ ^/(assets)/  {
 	        </section>
         </section>
 
-				<section>
+				<section style="font-size: 24px; margin-top: 20px;">
 					<h1>Questions, comments, concerns, observations, thoughts etc?</h1>
-					<h3>BY Ri Caragol / iamri.com</h3>
+					<h3>BY Ri Caragol and Anna Carey/ iamri.com</h3>
 				</section>
 
 			</div>

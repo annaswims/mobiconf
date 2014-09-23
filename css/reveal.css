@@ -636,6 +636,8 @@ body {
 	display: block;
 	z-index: 11;
 	opacity: 1;
+	background-color: white;
+	opacity:.95;
 }
 
 .reveal.center,
