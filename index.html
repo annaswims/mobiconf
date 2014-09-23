@@ -112,7 +112,7 @@ Speed affects conversions in a big way. For most e-commerce stores, the associat
 					<h2>Let's see if we comply...</h2>
 					<pre><code data-trim contenteditable style="font-size: 16px; margin-top: 20px;">
 c = ActiveRecord::Base.connection
-c.tables.collect do |t|  
+c.tables.collect do |t|
   columns = c.columns(t).collect(&:name).select {|x| x.ends_with?("_id" || x.ends_with("_type"))}
   indexed_columns = c.indexes(t).collect(&:columns).flatten.uniq
   unindexed = columns - indexed_columns
@@ -140,7 +140,7 @@ require 'benchmark'
 					Respectively these are, user CPU time, system CPU time, the sum of the user and system CPU times, and the elapsed real time.
 					</p>
 					<aside class="notes">
-						Real shows total turn-around time for a process Clock Time; while User shows the execution time for user-defined instructions (actual code execution time) and Sys is for time for executing system calls within the kernel! 
+						Real shows total turn-around time for a process Clock Time; while User shows the execution time for user-defined instructions (actual code execution time) and Sys is for time for executing system calls within the kernel!
 						Real time includes the waiting time also (the waiting time for I/O etc.)
 
 						http://stackoverflow.com/questions/556405/what-do-real-user-and-sys-mean-in-the-output-of-time1
@@ -206,13 +206,13 @@ puts Benchmark.measure { Business.where(:name => "ADS").includes(:lines).where(:
 					</p>
 					<pre><code data-trim contenteditable style="font-size: 18px; margin-top: 20px;">
 mobi_dev=# explain select * from lines;
-                           QUERY PLAN                           
+                           QUERY PLAN
 ----------------------------------------------------------------
  Seq Scan on lines  (cost=0.00..10016.26 rows=253726 width=318)
 					</code></pre>
 
 					<aside class="notes">
-						https://wiki.postgresql.org/wiki/Introduction_to_VACUUM,_ANALYZE,_EXPLAIN,_and_COUNT 
+						https://wiki.postgresql.org/wiki/Introduction_to_VACUUM,_ANALYZE,_EXPLAIN,_and_COUNT
 
 						Vacuuming isn't the only periodic maintenance your database needs. You also need to analyze the database so that the query planner has table statistics it can use when deciding how to execute a query. Simply put: Make sure you're running ANALYZE frequently enough, preferably via autovacuum. And increase the default_statistics_target (in postgresql.conf) to 100.
 
@@ -227,7 +227,7 @@ mobi_dev=# explain select * from lines;
 						<h2>But I can't explain properly, without analyzing first...</h2>
 <pre><code data-trim contenteditable style="font-size: 20px; margin-top: 10px;">
 mobi_dev=# explain select * from lines where active = true;
-                           QUERY PLAN                           
+                           QUERY PLAN
 ----------------------------------------------------------------
  Seq Scan on lines  (cost=0.00..10016.26 rows=171925 width=318)
    Filter: active
@@ -236,7 +236,7 @@ mobi_dev=# explain select * from lines where active = true;
 mobi_dev=# analyze lines;
 ANALYZE
 mobi_dev=# explain select * from lines where active = true;
-                           QUERY PLAN                           
+                           QUERY PLAN
 ----------------------------------------------------------------
  Seq Scan on lines  (cost=0.00..10015.92 rows=172874 width=318)
    Filter: active
@@ -251,7 +251,7 @@ mobi_dev=# explain select * from lines where active = true;
 
 <pre><code data-trim contenteditable style="font-size: 14px; margin-top: 10px;">
 mobi_dev=# explain analyze select * from lines where active = true ORDER BY liability;
-                                                      QUERY PLAN                                                      
+                                                      QUERY PLAN
 ----------------------------------------------------------------------------------------------------------------------
  Sort  (cost=75875.41..76307.59 rows=172874 width=318) (actual time=977.444..1088.552 rows=172017 loops=1)
    Sort Key: liability
@@ -264,7 +264,7 @@ mobi_dev=# explain analyze select * from lines where active = true ORDER BY liab
 </code></pre>
 <pre><code data-trim contenteditable style="font-size: 14px; margin-top: 10px;">
 mobi_dev=# explain analyze select * from lines where active = true ORDER BY created_by_id;
-                                                                      QUERY PLAN                                                                      
+                                                                      QUERY PLAN
 ------------------------------------------------------------------------------------------------------------------------------------------------------
  Index Scan using index_lines_on_created_by_id on lines  (cost=0.42..35829.77 rows=172874 width=318) (actual time=2.541..142.403 rows=172017 loops=1)
    Filter: active
@@ -278,10 +278,10 @@ mobi_dev=# explain analyze select * from lines where active = true ORDER BY crea
 						<h2>NOT IN VS EXCEPT</h2>
 
 <pre><code data-trim contenteditable style="font-size: 14px; margin-top: 10px;">
-mobi_dev=# explain analyze  select count(*) from people where active = 't' 
-and business_id = 23 and (employee_id is null or employee_id NOT IN 
+mobi_dev=# explain analyze  select count(*) from people where active = 't'
+and business_id = 23 and (employee_id is null or employee_id NOT IN
 (select external_employee_id from employees where business_id = 23));
-                                                                                 QUERY PLAN                                                                                 
+                                                                                 QUERY PLAN
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Aggregate  (cost=4977232278.72..4977232278.73 rows=1 width=0) (actual time=2537954.427..2537954.428 rows=1 loops=1)
    ->  Index Scan using index_people_on_business_id on people  (cost=3662.91..4977232151.30 rows=50966 width=0) (actual time=268984.300..2537950.020 rows=1989 loops=1)
@@ -302,7 +302,7 @@ and business_id = 23 and (employee_id is null or employee_id NOT IN
 mobi_dev=# EXPLAIN ANALYZE SELECT COUNT (*) FROM ( SELECT employee_id FROM people
 mobi_dev(# WHERE people.business_id = 23 AND (people.active = 't' OR  employee_id is null)
 mobi_dev(# EXCEPT SELECT external_employee_id FROM employees WHERE business_id =23)s;
-                                                                                        QUERY PLAN                                                                                        
+                                                                                        QUERY PLAN
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Aggregate  (cost=155776.52..155776.53 rows=1 width=0) (actual time=7638.495..7638.495 rows=1 loops=1)
    ->  Subquery Scan on s  (cost=153154.39..155548.87 rows=91059 width=0) (actual time=6459.607..7638.202 rows=1989 loops=1)
@@ -334,7 +334,7 @@ mobi_dev(# EXCEPT SELECT external_employee_id FROM employees WHERE business_id =
 				<section>
 					<h2>N+1 Queries and Eager Loading</h2>
 					<p>
-						What is Eager Loading (N+1) queries? 
+						What is Eager Loading (N+1) queries?
 						Eager loading is a way to improve performance by loading associated content through the DB. ActiveRecord’s eager loading capability in Rails makes it possible to significantly reduce the number of queries by letting you specify in advance all the associations that are going to be loaded.
 					</p>
 				</section>
@@ -366,26 +366,97 @@ mobi_dev(# EXCEPT SELECT external_employee_id FROM employees WHERE business_id =
 					</p>
 				</section>
 
-				<section>
-					<h2>References and Resources</h2>
-					<ul>
-						<li>http://torbit.com/benefits/</li>
-						<li>https://tomafro.net/2009/09/quickly-list-missing-foreign-key-indexes</li>
-						<li>http://www.ruby-doc.org/stdlib-1.9.3/libdoc/benchmark/rdoc/Benchmark.html</li>
-						<li>http://stackoverflow.com/questions/556405/what-do-real-user-and-sys-mean-in-the-output-of-time1</li>
-						<li>http://stackoverflow.com/questions/3658859/when-to-add-what-indexes-in-a-table-in-rails</li>
-						<li>https://wiki.postgresql.org/wiki/Introduction_to_VACUUM,_ANALYZE,_EXPLAIN,_and_COUNT</li>
-						<li>http://www.toptal.com/ruby-on-rails/top-10-mistakes-that-rails-programmers-make</li>
-						<li>http://railscasts.com/episodes/22-eager-loading-revised</li>
-						<li>http://pgtune.projects.pgfoundry.org/</li>
-						<li>http://www.airpair.com/ruby-on-rails/performance</li>
-						<li>Tony's Active Record Presentation</li>
-					</ul>
-					<p>
-						You can link between slides internally,
-						<a href="#/2/3">like this</a>.
-					</p>
-				</section>
+       	<section>
+       	  <h2>Towards the front end</h2>
+       	  <img src="sidecar.jpeg" />
+       	</section>
+
+        <section>
+          <h2>Browser performance</h2>
+          Percent of total page load time
+      	  <img src="page_load_time.png" />
+      	  <p>
+      	  Median page load time was 2.5-4s
+      	  </p>
+ 	    	</section>
+        <section>
+	      	<section>
+	      	   <h2>Dashboard Controller # index</h2>
+	      	  <img src="dashboard_performance.png" />
+	      	  <img src="performance_key.png" />
+						<ul>
+					    <li>Web Application 2.72s</li>
+							<li>Network 1.45s</li>
+							<li>Dom Processing 2.1s</li>
+							<li>Page Rendering 1.13s</li>
+						</ul>
+	 	    	</section>
+	 	    	<section>
+	 	    	   <h3>92 requests !</h3>
+	 	    	   <h3>2.9 MB</h3>
+	 	    	</section>
+        </section>
+ 	    	<section>
+ 	    	 <h1>MORE ASSET PIPELINE!</h1>
+ 	    	</section>
+
+ 	    	<section>
+ 	    	  <h2>Far-future Expires Header</h2>
+ 	    	   Because we have a unique url for each revision of the asset we the browser doesn't need to check if it has changed fro a year
+<pre><code>
+location ~ ^/assets/ {
+  expires 1y;
+  add_header Cache-Control public;
+
+  add_header ETag "";
+  break;
+}
+</code></pre>
+ 	    	</section>
+
+	      <section>
+	       <h2>GZip Compression</h2>
+	       Assets are gzipped during precompilation, using the maximum compression ratio, reducing the size of the data transfer to the minimum
+<pre><code>
+location ~ ^/(assets)/  {
+  root /path/to/public;
+  gzip_static on; # to serve pre-gzipped version
+  expires max;
+  add_header Cache-Control public;
+}
+</code></pre>
+		    </section>
+		    <section>
+		    	<h2>Spriting with Compass</h2>
+		    	Compass makes it easier to sprite.  Just drop all of the images into a directory.
+		    </section>
+ 				<section>
+	      	<section>
+
+
+						<h2>References and Resources</h2>
+						<ul>
+							<li><a href ="http://torbit.com/benefits/">torbit.com/benefits/</a></li>
+							<li><a href ="https://tomafro.net/2009/09/quickly-list-missing-foreign-key-indexes">tomafro.net/2009/09/quickly-list-missing-foreign-key-indexes</a></li>
+							<li><a href ="http://www.ruby-doc.org/stdlib-1.9.3/libdoc/benchmark/rdoc/Benchmark.html">www.ruby-doc.org/stdlib-1.9.3/libdoc/benchmark/rdoc/Benchmark.html</a></li>
+							<li><a href ="http://stackoverflow.com/questions/556405/what-do-real-user-and-sys-mean-in-the-output-of-time1">stackoverflow.com/questions/556405/what-do-real-user-and-sys-mean-in-the-output-of-time1</a></li>
+							<li><a href ="http://stackoverflow.com/questions/3658859/when-to-add-what-indexes-in-a-table-in-rails">stackoverflow.com/questions/3658859/when-to-add-what-indexes-in-a-table-in-rails</a></li>
+							<li><a href ="https://wiki.postgresql.org/wiki/Introduction_to_VACUUM,_ANALYZE,_EXPLAIN,_and_COUNT">https://wiki.postgresql.org/wiki/Introduction_to_VACUUM,_ANALYZE,_EXPLAIN,_and_COUNT</a></li>
+							<li><a href ="http://www.toptal.com/ruby-on-rails/top-10-mistakes-that-rails-programmers-make">www.toptal.com/ruby-on-rails/top-10-mistakes-that-rails-programmers-make</a></li>
+
+						</ul>
+					</section>
+					<section>
+						<ul>
+						  <li><a href ="http://railscasts.com/episodes/22-eager-loading-revised">railscasts.com/episodes/22-eager-loading-revised</a></li>
+							<li><a href ="http://pgtune.projects.pgfoundry.org/">pgtune.projects.pgfoundry.org</a></li>
+							<li><a href ="http://www.airpair.com/ruby-on-rails/performance">www.airpair.com/ruby-on-rails/performance</a></li>
+							<li>Tony's Active Record Presentation</li>
+							<li><a href ="http://guides.rubyonrails.org/asset_pipeline.html">guides.rubyonrails.org/asset_pipeline.html</a></li>
+							<li><a href ="http://compass-style.org/help/tutorials/spriting/">compass-style.org/help/tutorials/spriting/</a></li>
+						</ul>
+	        </section>
+        </section>
 
 				<section>
 					<h1>Questions, comments, concerns, observations, thoughts etc?</h1>
