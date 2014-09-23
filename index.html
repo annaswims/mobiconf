@@ -46,7 +46,7 @@
 					<h1>Need For Speed</h1>
 					<h3>Shaving Milliseconds Like a Boss</h3>
 					<p>
-						<small>Created by <a href="http://iamri.com">Ri Caragol</a> / <a href="http://twitter.com/ritec">@ritec</a></small>
+						<small>Created By: <a href="http://iamri.com">Ri Caragol and Anna Carey</a> / <a href="http://twitter.com/ritec">@ritec</a></small>
 					</p>
 				</section>
 
@@ -85,17 +85,19 @@ Speed affects conversions in a big way. For most e-commerce stores, the associat
 					<h2> Adding Indexes </h2>
 					<p>Indexes dramatically improve performance in SQL queries and generally should be added when:</p>
 					<ul>
-						<li>You have foreign keys</li>
-						<li>You have a column that is sorted often</li>
-						<li>There are lookup fields and columns that are used in a GROUP BY</li>
+						<li>Whenever you have foreign keys.</li>
+						<li>You have a column that is sorted, or ordered often have an index on that column.</li>
+						<li>If you have a has_many :through relationship, your join table should have a unique index on both properties involved in the join as a compound key.</li>
+						<li>Whenever there are lookup fields and columns that are used in a GROUP BY</li>
 						<li>When we fetch records directly using unique identifiers like email or username - add a unique index.</li>
 					</ul>
 				</section>
 
 				<section>
 					<h2>Things to keep in mind.</h2>
-					<ul>
-						<li>Without an Index we have to scan the whole table, this is inefficient.</li>
+					<ul style="font-size: 32px;">
+						<li>Without an Index we have to scan the whole table, this is inefficient and expensive.</li>
+						<li> If you se a WHERE, HAVING or ORDER BY in generated queries... make sure there's an index</li>
 						<li>Once an index is created, no further intervention is required: the system will update the index when the table is modified.</li>
 						<li>Your DB will use the index in queries when it thinks doing so would be more efficient than a sequential table scan.</li>
 						<li>Creating an index on a large table can take a long time. Reads are allowed, but writes won't be.</li>
@@ -164,7 +166,7 @@ require 'benchmark'
 				</section>
 
 				<section>
-					<h2>Benchmarking examples</h2>
+					<h2>Benchmarking example</h2>
 					<pre><code data-trim contenteditable style="font-size: 18px; margin-top: 20px;">
 require 'benchmark'
 include Benchmark          # we need the CAPTION and FORMAT constants
@@ -176,15 +178,25 @@ Benchmark.benchmark(CAPTION, 7, FORMAT, ">total:", ">avg:") do |x|
   tu = x.report("upto:")  { 1.upto(n) do ; a = "1"; end }
   [tf+tt+tu, (tf+tt+tu)/3]
 end
+#returns
+              user     system      total        real
+for:      0.010000   0.010000   0.020000 (  0.024594)
+times:    0.000000   0.000000   0.000000 (  0.010406)
+upto:     0.010000   0.010000   0.020000 (  0.012889)
+>total:   0.020000   0.020000   0.040000 (  0.047889)
+>avg:     0.006667   0.006667   0.013333 (  0.015963)
+
 					</code></pre>
 				</section>
 
 				<section>
 					<h2>Benchmarking Queries</h2>
-					<pre><code data-trim contenteditable style="font-size: 18px; margin-top: 20px;">
-//Use People without Employees example
-b = Business.find(23)
-Benchmark.measure{ b.people.authorized.in_role('enduser').readonly }
+					<pre><code data-trim contenteditable style="font-size: 14px; margin-top: 20px;">
+puts Benchmark.measure { Business.where(:name => "ADS").includes(:lines).where("lines.active = 't'").references(:lines) }
+  0.000000   0.000000   0.000000 (  0.000893)
+
+puts Benchmark.measure { Business.where(:name => "ADS").includes(:lines).where(:lines => { :active => true }) }
+  0.000000   0.000000   0.000000 (  0.007002)
 					</code></pre>
 				</section>
 
@@ -286,13 +298,35 @@ and business_id = 23 and (employee_id is null or employee_id NOT IN
  Total runtime: 2537957.639 ms
 (13 rows)
 </code></pre>
-<pre><code>
-SELECT employee_id
-FROM people
-WHERE people.active = 't' AND people.business_id = 21
-EXCEPT
-SELECT external_employee_id
-FROM employees;
+<pre><code data-trim contenteditable style="font-size: 14px; margin-top: 10px;">
+mobi_dev=# EXPLAIN ANALYZE SELECT COUNT (*) FROM ( SELECT employee_id FROM people
+mobi_dev(# WHERE people.business_id = 23 AND (people.active = 't' OR  employee_id is null)
+mobi_dev(# EXCEPT SELECT external_employee_id FROM employees WHERE business_id =23)s;
+                                                                                        QUERY PLAN                                                                                        
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=155776.52..155776.53 rows=1 width=0) (actual time=7638.495..7638.495 rows=1 loops=1)
+   ->  Subquery Scan on s  (cost=153154.39..155548.87 rows=91059 width=0) (actual time=6459.607..7638.202 rows=1989 loops=1)
+         ->  SetOp Except  (cost=153154.39..154638.28 rows=91059 width=7) (actual time=6459.604..7637.755 rows=1989 loops=1)
+               ->  Sort  (cost=153154.39..153896.34 rows=296779 width=7) (actual time=6459.594..7576.301 rows=279954 loops=1)
+                     Sort Key: "*SELECT* 1".employee_id
+                     Sort Method: external merge  Disk: 6024kB
+                     ->  Append  (cost=2546.11..122118.62 rows=296779 width=7) (actual time=24.388..755.030 rows=279954 loops=1)
+                           ->  Subquery Scan on "*SELECT* 1"  (cost=2546.11..45266.10 rows=101933 width=8) (actual time=24.387..387.592 rows=100238 loops=1)
+                                 ->  Bitmap Heap Scan on people  (cost=2546.11..44246.77 rows=101933 width=8) (actual time=24.386..370.551 rows=100238 loops=1)
+                                       Recheck Cond: (business_id = 23)
+                                       Rows Removed by Index Recheck: 300410
+                                       Filter: (active OR (employee_id IS NULL))
+                                       Rows Removed by Filter: 31792
+                                       ->  Bitmap Index Scan on index_people_on_business_id  (cost=0.00..2520.62 rows=135493 width=0) (actual time=21.929..21.929 rows=132030 loops=1)
+                                             Index Cond: (business_id = 23)
+                           ->  Subquery Scan on "*SELECT* 2"  (cost=3662.48..76852.52 rows=194846 width=7) (actual time=32.031..335.693 rows=179716 loops=1)
+                                 ->  Bitmap Heap Scan on employees  (cost=3662.48..74904.06 rows=194846 width=7) (actual time=32.029..306.479 rows=179716 loops=1)
+                                       Recheck Cond: (business_id = 23)
+                                       Rows Removed by Index Recheck: 61151
+                                       ->  Bitmap Index Scan on index_employees_on_business_id  (cost=0.00..3613.77 rows=194846 width=0) (actual time=30.255..30.255 rows=232292 loops=1)
+                                             Index Cond: (business_id = 23)
+ Total runtime: 7663.194 ms
+(22 rows)
 </code></pre>
 				</section>
 
@@ -301,15 +335,14 @@ FROM employees;
 					<h2>N+1 Queries and Eager Loading</h2>
 					<p>
 						What is Eager Loading (N+1) queries? 
-						Eager loading is a way to improve performance by loading associated content through the DB but unfortunately it can be a database performance problem at times. 
+						Eager loading is a way to improve performance by loading associated content through the DB. ActiveRecord’s eager loading capability in Rails makes it possible to significantly reduce the number of queries by letting you specify in advance all the associations that are going to be loaded.
 					</p>
 				</section>
 
 				<section>
 					<h2>Eager Loading Example</h2>
 					<p>
-						Let's BULLET show us the way.
-
+						Let BULLET show us the way.
 					</p>
 				</section>
 
@@ -317,10 +350,12 @@ FROM employees;
 					<h2> Other Ways to Improve performance at a glance</h2>
 					<ul>
 						<li>Use count instead of length</li>
-						<li>Auto Generated Routes (don't generate routes you don't use)</li>
-						<li>Tune your Postgresql.conf (use pgtune)</li>
-						<li>Use Mechache when possible</li>
-						<li></li>
+						<li>Be careful with auto generated toutes (don't generate routes you don't use)</li>
+						<li>Tune your Postgresql.conf to work well with your hardware (use pgtune)</li>
+						<li>Use Memcache when possible</li>
+						<li>Tune your Garbage Collector</li>
+						<li>Only load necessary gems in production</li>
+						<li>Check and analyze your logs for innefficiencies</li>
 					</ul>
 				</section>
 
@@ -332,15 +367,19 @@ FROM employees;
 				</section>
 
 				<section>
-					<h2>References</h2>
+					<h2>References and Resources</h2>
 					<ul>
 						<li>http://torbit.com/benefits/</li>
 						<li>https://tomafro.net/2009/09/quickly-list-missing-foreign-key-indexes</li>
 						<li>http://www.ruby-doc.org/stdlib-1.9.3/libdoc/benchmark/rdoc/Benchmark.html</li>
 						<li>http://stackoverflow.com/questions/556405/what-do-real-user-and-sys-mean-in-the-output-of-time1</li>
+						<li>http://stackoverflow.com/questions/3658859/when-to-add-what-indexes-in-a-table-in-rails</li>
 						<li>https://wiki.postgresql.org/wiki/Introduction_to_VACUUM,_ANALYZE,_EXPLAIN,_and_COUNT</li>
+						<li>http://www.toptal.com/ruby-on-rails/top-10-mistakes-that-rails-programmers-make</li>
 						<li>http://railscasts.com/episodes/22-eager-loading-revised</li>
 						<li>http://pgtune.projects.pgfoundry.org/</li>
+						<li>http://www.airpair.com/ruby-on-rails/performance</li>
+						<li>Tony's Active Record Presentation</li>
 					</ul>
 					<p>
 						You can link between slides internally,
